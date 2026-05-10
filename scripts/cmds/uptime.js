@@ -3,160 +3,165 @@ const path = require("path");
 const Canvas = require("canvas");
 
 module.exports = {
-  config: {
-    name: "up",
-    aliases: ["uptime", "upt"],
-    version: "1.7",
-    author: "SIYAM_HASAN",
-    countDown: 5,
-    role: 0,
-    shortDescription: "Bot Status",
-    longDescription: "background card with clean premium spacing",
-    category: "system",
-    guide: "{p}uptime"
-  },
+config: {
+name: "up",
+aliases: ["uptime"],
+version: "2.0",
+author: "SIYAM_HASAN",
+countDown: 5,
+role: 0,
+shortDescription: "Neon Premium Dashboard",
+category: "system"
+},
 
-  onStart: async function ({ message, api, event }) {
-    const startTime = Date.now();
-    try {
-      api.setMessageReaction("⏳", event.messageID, () => {}, true);
-      
-      const uptime = process.uptime();
-      const h = Math.floor(uptime / 3600);
-      const m = Math.floor((uptime % 3600) / 60);
-      const s = Math.floor(uptime % 60);
-      const uptimeStr = `${h}h ${m}m ${s}s`;
+onStart: async function ({ message, api, event }) {
 
-      const ping = Date.now() - startTime;
-      const memUsed = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2);
-      const memTotal = (process.memoryUsage().heapTotal / 1024 / 1024).toFixed(2);
-      const memPercent = ((memUsed / memTotal) * 100).toFixed(1);
+const startTime = Date.now();
+api.setMessageReaction("⏳", event.messageID, () => {}, true);
 
-      const cpuUsage = Math.min(
-        ((process.cpuUsage().user + process.cpuUsage().system) / 1000000) % 100,
-        100
-      );
+try {
 
-      const threads = process._getActiveHandles().length;
-      const nodeVersion = process.version;
-      const platform = process.platform.toUpperCase();
-      
-      const canvas = Canvas.createCanvas(1400, 900);
-      const ctx = canvas.getContext("2d");
+// ================= DATA =================
+const uptime = process.uptime();
+const h = Math.floor(uptime / 3600);
+const m = Math.floor((uptime % 3600) / 60);
+const s = Math.floor(uptime % 60);
+const uptimeStr = `${h}h ${m}m ${s}s`;
 
-      const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      bg.addColorStop(0, "#000428");
-      bg.addColorStop(1, "#004e92");
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      const containerX = 30;
-      const containerY = 30;
-      const containerW = canvas.width - 60;
-      const containerH = canvas.height - 60;
+const ping = Date.now() - startTime;
 
-      ctx.fillStyle = "rgba(255,255,255,0.07)";
-      ctx.beginPath();
-      ctx.roundRect(containerX, containerY, containerW, containerH, 45);
-      ctx.fill();
-      
-      ctx.fillStyle = "rgba(0,0,0,0.35)";
-      ctx.beginPath();
-      ctx.roundRect(containerX, containerY, containerW, 150, 45);
-      ctx.fill();
+const memUsed = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2);
+const memTotal = (process.memoryUsage().heapTotal / 1024 / 1024).toFixed(2);
+const memPercent = ((memUsed / memTotal) * 100).toFixed(1);
 
-      ctx.font = "bold 78px Segoe UI";
-      ctx.fillStyle = "#FFFFFF";
-      ctx.textAlign = "center";
-      ctx.fillText("📉 BOT STATUS DASHBOARD", canvas.width / 2, containerY + 95);
+const cpuUsage = Math.min(
+((process.cpuUsage().user + process.cpuUsage().system) / 1000000) % 100,
+100
+);
 
-      ctx.font = "italic 30px Segoe UI";
-      ctx.fillStyle = "rgba(255,255,255,0.8)";
-      ctx.fillText("All systems running smoothly", canvas.width / 2, containerY + 130);
-      
-      const stats = [
-        { icon: "⏰", title: "SYSTEM UPTIME", value: uptimeStr, sub: "Running Time", color: "#FFD700", bar: Math.min((uptime / 3600) * 4.1667, 100) },
-        { icon: "📡", title: "NETWORK PING", value: `${ping} ms`, sub: "Latency", color: "#00FFAA", bar: Math.min(ping / 10, 100) },
-        { icon: "💾", title: "MEMORY USAGE", value: `${memUsed} MB`, sub: `${memPercent}% of ${memTotal}MB`, color: "#00FF00", bar: memPercent },
-        { icon: "📊", title: "CPU LOAD", value: `${cpuUsage.toFixed(1)}%`, sub: "Processor", color: "#FFAA00", bar: cpuUsage },
-        { icon: "⚒️", title: "NODE VERSION", value: nodeVersion, sub: "Runtime", color: "#9D4EDD", bar: 100 },
-        { icon: "👑", title: "BOT OWNER", value: "SIYAM HASAN", sub: "Administrator", color: "#FFA500", bar: 100 }
-      ];
+const nodeVersion = process.version;
 
-      const boxW = (containerW - 120) / 2;
-      const boxH = 190;
-      const startX = containerX + 40;
-      const startY = containerY + 180;
+// ================= CANVAS =================
+const canvas = Canvas.createCanvas(1400, 900);
+const ctx = canvas.getContext("2d");
 
-      stats.forEach((s, i) => {
-        const row = Math.floor(i / 2);
-        const col = i % 2;
-        const x = startX + col * (boxW + 40);
-        const y = startY + row * (boxH + 30);
+// ===== Background image =====
+const bg = await Canvas.loadImage("https://i.imgur.com/hjWdA6L.jpeg");
+ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
-        ctx.fillStyle = "rgba(0,0,0,0.35)";
-        ctx.beginPath();
-        ctx.roundRect(x, y, boxW, boxH, 28);
-        ctx.fill();
+// Dark overlay
+ctx.fillStyle = "rgba(0,0,0,0.65)";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.strokeStyle = s.color;
-        ctx.lineWidth = 3;
-        ctx.stroke();
+// ================= PROFILE IMAGE =================
+const avatar = await Canvas.loadImage("https://i.imgur.com/XfeDVM1.jpeg");
 
-        ctx.font = "bold 58px Segoe UI";
-        ctx.fillStyle = s.color;
-        ctx.fillText(s.icon, x + 35, y + 75);
+// Position & size
+const avatarX = 1150;
+const avatarY = 110;
+const avatarSize = 150;
 
-        ctx.font = "bold 28px Segoe UI";
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillText(s.title, x + 200, y + 55);
+// Circle crop
+ctx.save();
+ctx.beginPath();
+ctx.arc(avatarX, avatarY, avatarSize / 2, 0, Math.PI * 2, true);
+ctx.closePath();
+ctx.clip();
 
-        ctx.font = "18px Segoe UI";
-        ctx.fillStyle = "rgba(255,255,255,0.7)";
-        ctx.fillText(s.sub, x + 150, y + 90);
+// Draw image
+ctx.drawImage(
+  avatar,
+  avatarX - avatarSize / 2,
+  avatarY - avatarSize / 2,
+  avatarSize,
+  avatarSize
+);
+ctx.restore();
 
-        ctx.font = "bold 42px Segoe UI";
-        ctx.fillStyle = s.color;
-        ctx.textAlign = "right";
-        ctx.fillText(s.value, x + boxW - 35, y + 145);
-        ctx.textAlign = "left";
+// Neon border glow
+ctx.beginPath();
+ctx.arc(avatarX, avatarY, avatarSize / 2, 0, Math.PI * 2);
+ctx.strokeStyle = "#00eaff";
+ctx.lineWidth = 5;
+ctx.shadowColor = "#00eaff";
+ctx.shadowBlur = 25;
+ctx.stroke();
+ctx.shadowBlur = 0;
 
-        const barY = y + boxH - 30;
-        const barW = boxW - 70;
+// ================= TITLE BOX =================
+ctx.strokeStyle = "#00eaff";
+ctx.lineWidth = 4;
+ctx.beginPath();
+ctx.roundRect(200, 50, 1000, 120, 40);
+ctx.stroke();
 
-        ctx.fillStyle = "rgba(255,255,255,0.15)";
-        ctx.beginPath();
-        ctx.roundRect(x + 35, barY, barW, 12, 6);
-        ctx.fill();
+ctx.font = "bold 60px Arial";
+ctx.fillStyle = "#00eaff";
+ctx.textAlign = "center";
+ctx.fillText("SIYAM HASAN", 700, 120);
 
-        ctx.fillStyle = s.color;
-        ctx.beginPath();
-        ctx.roundRect(x + 35, barY, (barW * s.bar) / 100, 12, 6);
-        ctx.fill();
+// ================= CIRCLE FUNCTION =================
+function drawCircle(x, y, color, title, value) {
+ctx.beginPath();
+ctx.arc(x, y, 100, 0, Math.PI * 2);
+ctx.strokeStyle = color;
+ctx.lineWidth = 8;
+ctx.shadowColor = color;
+ctx.shadowBlur = 20;
+ctx.stroke();
+ctx.shadowBlur = 0;
 
-        ctx.font = "bold 16px Segoe UI";
-        ctx.fillStyle = "#FFFFFF";
-        ctx.textAlign = "center";
-        ctx.fillText(`${Math.min(s.bar, 100).toFixed(1)}%`, x + 35 + barW / 2, barY - 12);
-        ctx.textAlign = "left";
-      });
-      
-      const filePath = path.join(__dirname, `uptime-${Date.now()}.png`);
-      fs.writeFileSync(filePath, canvas.toBuffer("image/png"));
-      
-      api.setMessageReaction("✅", event.messageID, () => {}, true);
-      
-      await message.reply({
-        body: "◢◤━━━━━━━━━━━━━━━━◥◣\n      𝗚𝗢𝗔𝗧 𝗕𝗢𝗧 𝗩𝟭 𝗨𝗣𝗧𝗜𝗠𝗘\n          𝗢𝗪𝗡𝗘𝗥:-𝗦𝗜𝗬𝗔𝗠 𝗛𝗔𝗦𝗔𝗡\n◥◣━━━━━━━━━━━━━━━━◢◤",
-        attachment: fs.createReadStream(filePath)
-      });
+ctx.font = "bold 22px Arial";
+ctx.fillStyle = "#ffffff";
+ctx.textAlign = "center";
+ctx.fillText(title, x, y - 10);
 
-      setTimeout(() => fs.existsSync(filePath) && fs.unlinkSync(filePath), 5000);
+ctx.font = "bold 28px Arial";
+ctx.fillStyle = color;
+ctx.fillText(value, x, y + 30);
+}
 
-    } catch (err) {
-      console.error("Uptime error:", err);
-      api.setMessageReaction("❌", event.messageID, () => {}, true);
-      message.reply("❌ Dashboard generate problem.");
-    }
-  }
+// ================= 6 CIRCLES =================
+drawCircle(300, 350, "#00eaff", "UPTIME", uptimeStr);
+drawCircle(700, 350, "#ff00ff", "PING", `${ping}ms`);
+drawCircle(1100, 350, "#00ff88", "MEMORY", `${memUsed}MB`);
+
+drawCircle(300, 650, "#ffd700", "CPU", `${cpuUsage.toFixed(1)}%`);
+drawCircle(700, 650, "#ff4444", "NODE", nodeVersion);
+drawCircle(1100, 650, "#ff8800", "OWNER", "SIYAM");
+
+// ================= FOOTER =================
+ctx.strokeStyle = "#ff00ff";
+ctx.lineWidth = 3;
+ctx.beginPath();
+ctx.roundRect(200, 780, 1000, 80, 30);
+ctx.stroke();
+
+ctx.font = "bold 28px Arial";
+ctx.fillStyle = "#ffffff";
+ctx.fillText("GOAT BOT • Premium System Dashboard", 700, 830);
+
+// ================= SAVE =================
+const filePath = path.join(__dirname, `neon-${Date.now()}.png`);
+fs.writeFileSync(filePath, canvas.toBuffer());
+
+api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+await message.reply({
+body: `◢◤━━━━━━━━━━━━━━◥◣
+      𝗚𝗢𝗔𝗧 𝗕𝗢𝗧 𝗩𝟭 𝗨𝗣𝗧𝗜𝗠𝗘
+          𝗢𝗪𝗡𝗘𝗥 : 𝆠፝𝐒𝐈𝐘𝐀𝐌
+◥◣━━━━━━━━━━━━━━◢◤`,
+attachment: fs.createReadStream(filePath)
+});
+
+setTimeout(() => fs.unlinkSync(filePath), 5000);
+
+} catch (err) {
+console.log(err);
+api.setMessageReaction("❌", event.messageID, () => {}, true);
+message.reply("Error generating dashboard");
+}
+
+}
 };
