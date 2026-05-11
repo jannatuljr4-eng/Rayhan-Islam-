@@ -34,14 +34,21 @@ const last = {};
 const TRIGGERS = [
   {
     words: ["siyam", "Siyam", "সিয়াম ভাই", "সিয়াম"],
-    text: "👉আমার বস🐮 亗𝐃𝐒 乂𝐒𝐈𝐘𝐀𝐌亗 এখন বিজি আছে । তার ইনবক্সে এ মেসেজ দিয়ে রাখো ‎‎‎‎‎‎‎‎‎[https://www.facebook.com/share/18K1jti9xb/] 🔰 ♪√বস ফ্রি হলে আসবে,! 😜🐒⚠️ সাবধান বুঝে শুনে নক দিও 😈🔥 👑 বস সিয়ামের গার্লফ্রেন্ড মাদিহা আছে 💖⚡",
+    text: "👉আমার বস🐮 亗𝐃𝐒 乂𝐒𝐈𝐘𝐀𝐌亗 এখন বিজি আছে । তার ইনবক্সে এ মেসেজ দিয়ে রাখো ‎‎‎‎‎‎‎‎‎[https://www.facebook.com/share/18K1jti9xb/] 🔰 ♪√বস ফ্রি হলে আসবে,! 😜🐒⚠️ ",
+
+    // 🖼️ আগেরটা + নতুন ৩টা
     images: [
-      "https://i.imgur.com/Q8IpXi2.jpeg"
+      "https://i.imgur.com/Q8IpXi2.jpeg",
+      "https://files.catbox.moe/3nmidw.jpg",
+      "https://files.catbox.moe/81i9c7.jpg",
+      "https://files.catbox.moe/mziosk.jpg"
     ]
   },
+
   {
     words: ["@নি্ঁঝু্ঁম্ঁ রা্ঁতে্ঁর্ঁ প্ঁরী্ঁ", "@নিঝুম", "@বট"],
     text: "-🤖 জানু, আমাকে মেনশন দিয়ে লাভ নাই 😏💬- কারণ আমি একটা ম্যাসেঞ্জার রোবট, শুধু মজার জন্য বানানো হইছে 😄⚡,🤖 আমাকে বানানো হয়েছে শুধুমাত্র আপনাদেরকে বিনোদনের জন্য, আমাকে বানিয়েছেন আমার বস সিয়াম হাসান-😽🫶 চাইলে আপনিও আপনার গ্রুপে নিতে পারেন [https://www.facebook.com/share/18K1jti9xb/",
+
     images: [
       "https://i.imgur.com/rkrXNso.jpeg",
       "https://i.imgur.com/zrpFJUc.jpeg"
@@ -56,35 +63,46 @@ exports.onChat = async function ({ event, api }) {
   try {
     const { threadID, senderID, messageID } = event;
     const body = (event.body || "").toLowerCase().trim();
+
     if (!body) return;
 
-    // bot নিজের মেসেজ ignore
+    // 🤖 bot নিজের message ignore
     if (senderID === api.getCurrentUserID()) return;
 
-    // cooldown
+    // ⏱️ cooldown system
     const now = Date.now();
-    if (last[threadID] && now - last[threadID] < cooldown) return;
+
+    if (last[threadID] && now - last[threadID] < cooldown)
+      return;
 
     let matched = null;
+
     for (const t of TRIGGERS) {
-      if (t.words.some(w => body.includes(w))) {
+      if (t.words.some(w => body.includes(w.toLowerCase()))) {
         matched = t;
         break;
       }
     }
+
     if (!matched) return;
 
     last[threadID] = now;
 
-    const imgUrl = matched.images[Math.floor(Math.random() * matched.images.length)];
+    // 🎲 random image select
+    const imgUrl =
+      matched.images[
+        Math.floor(Math.random() * matched.images.length)
+      ];
+
     const imgName = path.basename(imgUrl);
     const imgPath = path.join(__dirname, imgName);
 
+    // 📥 download if not exists
     if (!fs.existsSync(imgPath)) {
       await download(imgUrl, imgPath);
     }
 
-    // 🔥 reply message
+    // 💬 send reply
     api.sendMessage(
       {
         body: matched.text,
@@ -100,23 +118,32 @@ exports.onChat = async function ({ event, api }) {
 };
 
 // =======================
-// DOWNLOAD FUNCTION
+// 📥 DOWNLOAD FUNCTION
 // =======================
 function download(url, dest) {
   return new Promise((resolve, reject) => {
+
     const file = fs.createWriteStream(dest);
 
     https.get(url, (res) => {
+
       if (res.statusCode !== 200) {
         fs.unlink(dest, () => {});
         return reject();
       }
 
       res.pipe(file);
-      file.on("finish", () => file.close(resolve));
+
+      file.on("finish", () => {
+        file.close(resolve);
+      });
+
     }).on("error", () => {
+
       fs.unlink(dest, () => {});
       reject();
+
     });
+
   });
 }
