@@ -1,142 +1,159 @@
-const fs = require("fs-extra");
-const path = require("path");
-const https = require("https");
+const axios = require("axios");
 
 module.exports = {
   config: {
     name: "help2",
-    aliases: ["menu", "commands"],
-    version: "5.0",
-    author: "AKASH (fixed by ChatGPT)",
-    shortDescription: "Show all commands",
-    longDescription: "Show all commands in fancy font with boxes",
-    category: "system",
-    guide: "{pn}help [command name]"
+    version: "3.0.0",
+    author: "𝆠፝𝐒𝐈𝐘𝐀𝐌-𝐇𝐀𝐒𝐀𝐍",
+    countDown: 5,
+    role: 0,
+    shortDescription: {
+      en: "Show all commands"
+    },
+    longDescription: {
+      en: "Display command list and usage"
+    },
+    category: "info",
+    guide: {
+      en: "{pn}help2 / {pn}help2 <command>"
+    }
   },
 
-  onStart: async function ({ message, args, prefix }) {
-    try {
-      // SAFE COMMAND LOADER
-      const allCommands =
-        global?.GoatBot?.commands || new Map();
+  onStart: async function ({ message, args, event, role }) {
+    const prefix = global.GoatBot.config.prefix;
+    const groupName = event.threadName || "UNKNOWN GROUP";
+
+    const mediaLinks = [
+      "https://files.catbox.moe/41hfau.jpg",
+      "https://files.catbox.moe/81i9c7.jpg",
+      "https://files.catbox.moe/3hhite.jpg"
+    ];
+
+    // 🔁 IMAGE ROTATION SYSTEM
+    global.help2Index = global.help2Index || 0;
+    const currentIndex = global.help2Index;
+    global.help2Index = (global.help2Index + 1) % mediaLinks.length;
+
+    const { commands, aliases } = global.GoatBot;
+
+    // 🔥 MAIN MENU
+    if (!args[0]) {
+      let msg = `
+✡️┏━★━━━━━━━━★━┓✡️
+
+👑 ╭─❖ GROUP ❖─╮
+   ╰➤ 『${groupName}』
+
+⚙️ ╭─❖ PREFIX ❖─╮
+   ╰➤ 『${prefix}』
+
+🔮 ╭─❖ COMMAND ❖─╮
+   ╰➤ 『${prefix}help2』
+
+✡️┗━★━━━━━━━━★━┛✡️
+`;
 
       const categories = {};
 
-      // Fancy font
-      const fancyFont = (str = "") => {
-        const map = {
-          A:"𝐀",B:"𝐁",C:"𝐂",D:"𝐃",E:"𝐄",F:"𝐅",G:"𝐆",H:"𝐇",
-          I:"𝐈",J:"𝐉",K:"𝐊",L:"𝐋",M:"𝐌",N:"𝐍",O:"𝐎",P:"𝐏",
-          Q:"𝐐",R:"𝐑",S:"𝐒",T:"𝐓",U:"𝐔",V:"𝐕",W:"𝐖",X:"𝐗",
-          Y:"𝐘",Z:"𝐙",
-          a:"𝐚",b:"𝐛",c:"𝐜",d:"𝐝",e:"𝐞",f:"𝐟",g:"𝐠",h:"𝐡",
-          i:"𝐢",j:"𝐣",k:"𝐤",l:"𝐥",m:"𝐦",n:"𝐧",o:"𝐨",p:"𝐩",
-          q:"𝐪",r:"𝐫",s:"𝐬",t:"𝐭",u:"𝐮",v:"𝐯",w:"𝐰",x:"𝐱",
-          y:"𝐲",z:"𝐳"
-        };
-        return str.replace(/[A-Za-z]/g, c => map[c] || c);
-      };
+      for (const [name, cmd] of commands) {
+        if (!cmd.config || cmd.config.role > role) continue;
 
-      // Category font
-      const categoryFont = (str = "") => {
-        const map = {
-          A:"𝙰",B:"𝙱",C:"𝙲",D:"𝙳",E:"𝙴",F:"𝙵",G:"𝙶",H:"𝙷",
-          I:"𝙸",J:"𝙹",K:"𝙺",L:"𝙻",M:"𝙼",N:"𝙽",O:"𝙾",P:"𝙿",
-          Q:"𝚀",R:"𝚁",S:"𝚂",T:"𝚃",U:"𝚄",V:"𝚅",W:"𝚆",X:"𝚇",
-          Y:"𝚈",Z:"𝚉",
-          a:"𝚊",b:"𝚋",c:"𝚌",d:"𝚍",e:"𝚎",f:"𝚏",g:"𝚐",h:"𝚑",
-          i:"𝚒",j:"𝚓",k:"𝚔",l:"𝚕",m:"𝚖",n:"𝚗",o:"𝚘",p:"𝚙",
-          q:"𝚚",r:"𝚛",s:"𝚜",t:"𝚝",u:"𝚞",v:"𝚟",w:"𝚠",x:"𝚡",
-          y:"𝚢",z:"𝚣"
-        };
-        return str.split("").map(c => map[c] || c).join("");
-      };
+        const category = (cmd.config.category || "OTHER").toUpperCase();
+        if (!categories[category]) categories[category] = [];
 
-      const cleanCategoryName = (text) =>
-        (text || "others").toString().toLowerCase();
-
-      // GROUP COMMANDS SAFE
-      for (const [name, cmd] of allCommands) {
-        const cat = cleanCategoryName(cmd?.config?.category);
-        if (!categories[cat]) categories[cat] = [];
-        categories[cat].push(name);
+        categories[category].push(name);
       }
 
-      const formatCommandsBox = (cmds = []) =>
-        cmds
-          .sort()
-          .map(c => `│  │ ♻️ ${fancyFont(c)}`)
-          .join("\n");
-
-      // MESSAGE BUILD
-      let msg = `│\n│  ${fancyFont("COMMANDS MENU")}\n│  ───────────────\n`;
-      msg += `│  ${fancyFont("PREFIX")} : ${prefix}\n`;
-      msg += `│  ${fancyFont("TOTAL")}  : ${allCommands.size || 0}\n`;
-      msg += `│  ${fancyFont("AUTHOR")} : 👑𝆠፝𝐒𝐈𝐘𝐀𝐌👑\n│\n`;
-
-      for (const cat of Object.keys(categories)) {
-        msg += `│  ┌─ ${categoryFont(cat.toUpperCase())} ─┐\n`;
-        msg += formatCommandsBox(categories[cat]) + "\n";
-        msg += `│  └─────────────┘\n│\n`;
+      for (const cat of Object.keys(categories).sort()) {
+        msg += `
+╭━━━❖ 『 ${cat} 』 ❖━━━╮
+`;
+        for (const name of categories[cat].sort()) {
+          msg += `┃ ✡️ ${name}\n`;
+        }
+        msg += `╰━━━━━━━━━━━━━━━╯\n`;
       }
 
-      msg += `│  𝐔𝐒𝐄 : ${prefix}fork ♻️command\n│`;
+      const total = Object.values(categories).reduce((a, b) => a + b.length, 0);
 
-      // GIF SYSTEM SAFE
-      const gifURLs = [
-        "https://i.imgur.com/Xw6JTfn.gif",
-        "https://i.imgur.com/mW0yjZb.gif",
-        "https://i.imgur.com/KQBcxOV.gif"
-      ];
+      msg += `
+✡️┏━★━━━━━━━━★━┓✡️
 
-      const randomGifURL =
-        gifURLs[Math.floor(Math.random() * gifURLs.length)];
+📊 ╭─❖ TOTAL COMMAND ❖─╮
+   ╰➤ 『${total}』
 
-      const gifFolder = path.join(__dirname, "cache");
+📖 ╭─❖ HOW TO USE ❖─╮
+   ╰➤ 『${prefix}help2 <command>』
 
-      // FIX: ensure folder always exists
-      await fs.ensureDir(gifFolder);
+🌐 ╭─❖ FACEBOOK ❖─╮
+   ╰➤ 『https://www.facebook.com/share/18K1jti9xb/』
 
-      const gifName = path.basename(randomGifURL);
-      const gifPath = path.join(gifFolder, gifName);
+👑 ╭─❖ OWNER ❖─╮
+   ╰➤『𝆠፝𝐒𝐈𝐘𝐀𝐌-𝐇𝐀𝐒𝐀𝐍』
 
-      if (!fs.existsSync(gifPath)) {
-        await downloadGif(randomGifURL, gifPath);
+┗━★━━━━━━━━★━┛
+`;
+
+      try {
+        const randomLink = mediaLinks[currentIndex];
+        const stream = await axios.get(randomLink, { responseType: "stream" }).then(res => res.data);
+
+        return message.reply({
+          body: msg,
+          attachment: stream
+        });
+
+      } catch (e) {
+        return message.reply(msg);
       }
-
-      return message.reply({
-        body: msg,
-        attachment: fs.createReadStream(gifPath)
-      });
-
-    } catch (err) {
-      console.error("HELP2 ERROR:", err);
-      return message.reply("❌ Menu load failed. Check console logs.");
     }
+
+    // 🔍 COMMAND INFO
+    const cmdName = args[0].toLowerCase();
+    const cmd = commands.get(cmdName) || commands.get(aliases.get(cmdName));
+
+    if (!cmd) {
+      return message.reply(`❌ Command "${cmdName}" not found`);
+    }
+
+    const cfg = cmd.config;
+
+    const roleText =
+      cfg.role == 0 ? "All Users" :
+      cfg.role == 1 ? "Group Admin" :
+      cfg.role == 2 ? "Bot Admin" : "Unknown";
+
+    const usage = (cfg.guide?.en || "No guide")
+      .replace(/{pn}/g, prefix)
+      .replace(/{n}/g, cfg.name);
+
+    const info = `
+✡️┏━★━━━━━━━━★━┓✡️
+
+👑 ╭─❖ COMMAND ❖─╮
+   ╰➤ 『${cfg.name}』
+
+📂 ╭─❖ CATEGORY ❖─╮
+   ╰➤ 『${cfg.category}』
+
+📜 ╭─❖ DESCRIPTION ❖─╮
+   ╰➤ 『${cfg.longDescription?.en || "No description"}』
+
+⚙️ ╭─❖ GUIDE ❖─╮
+   ╰➤ 『${usage}』
+
+🔐 ╭─❖ PERMISSION ❖─╮
+   ╰➤ 『${roleText}』
+
+🔄 ╭─❖ VERSION ❖─╮
+   ╰➤ 『${cfg.version}』
+
+👑 ╭─❖ AUTHOR ❖─╮
+   ╰➤ 『${cfg.author}』
+
+┗━★━━━━━━━━★━┛
+`;
+
+    return message.reply(info);
   }
 };
-
-// DOWNLOAD FIXED (SAFE)
-function downloadGif(url, dest) {
-  return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(dest);
-
-    https
-      .get(url, (res) => {
-        if (res.statusCode !== 200) {
-          fs.unlink(dest, () => {});
-          return reject(new Error("Download failed: " + res.statusCode));
-        }
-
-        res.pipe(file);
-
-        file.on("finish", () => {
-          file.close(resolve);
-        });
-      })
-      .on("error", (err) => {
-        fs.unlink(dest, () => {});
-        reject(err);
-      });
-  });
-}
