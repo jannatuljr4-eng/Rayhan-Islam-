@@ -2,102 +2,71 @@ const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 
-// 🔒 AUTHOR LOCK
-const LOCKED_AUTHOR = "FARHAN-KHAN";
-
 module.exports = {
   config: {
     name: "fork",
     aliases: ["repo", "link"],
-    version: "3.0",
-    author: LOCKED_AUTHOR,
+    version: "4.0",
+    author: "SIYAM",
     countDown: 3,
     role: 0,
-    longDescription: "Styled fork system with dual links",
-    category: "system",
-    guide: { en: "{pn}" }
+    shortDescription: "Premium Video Sender",
+    longDescription: "Auto download and send premium video",
+    category: "media",
+    guide: {
+      en: "{pn}"
+    }
   },
 
   onStart: async function ({ message }) {
+    const cacheDir = path.join(__dirname, "cache");
+    const filePath = path.join(cacheDir, "fork_video.mp4");
+
     try {
 
-      // 🔒 author protection
-      if (module.exports.config.author !== LOCKED_AUTHOR) {
-        return message.reply("❌ AUTHOR LOCKED!");
-      }
-
-      const text =
-`╔═━━━✥◈✥━━━═╗
-     🌟 𝗢𝗪𝗡𝗘𝗥 𝗙𝗢𝗥𝗞 𝗭𝗢𝗡𝗘 🌟
-╚═━━━✥◈✥━━━═╝
-
-👑 SIYAM HASAN (OWNER)
-
-━━━━━━━━━━━━━━━━━━━━━━━
-🔗 FACEBOOK ACCOUNT
-━━━━━━━━━━━━━━━━━━━━━━━
-
-\`\`\`
-https://facebook.com/61560326905548
-\`\`\`
-
-
-━━━━━━━━━━━━━━━━━━━━━━━
-⚡ FORK LINK 1 (GOAT BOT)
-━━━━━━━━━━━━━━━━━━━━━━━
-
-\`\`\`
-https://github.com/mdsiyam01325251695016080-maker/siyam-Hassan-.git
-\`\`\`
-
-
-
-
-
-━━━━━━━━━━━━━━━━━━━━━━━
-✨ FORK LINK 2 (SIYAM HASAN BITU)
-━━━━━━━━━━━━━━━━━━━━━━━
-
-\`\`\`
-https://github.com/mdsiyam121314151-source/_Siyam_Farhan_God-Bot.git
-\`\`\`
-
-
-━━━━━━━━━━━━━━━━━━━━━━━
-📌 INSTRUCTION
-━━━━━━━━━━━━━━━━━━━━━━━
-
-👉 fork করতে লিখো: fork2
-
-━━━━━━━━━━━━━━━━━━━━━━━
-⚡ Powered By SIYAM 💀
-━━━━━━━━━━━━━━━━━━━━━━━`;
-
-      const imgUrl = "https://files.catbox.moe/21jqpc.jpg";
-
-      const cacheDir = path.join(__dirname, "cache");
-      const filePath = path.join(cacheDir, "fork.jpg");
-
+      // cache folder create
       if (!fs.existsSync(cacheDir)) {
         fs.mkdirSync(cacheDir, { recursive: true });
       }
 
-      const response = await axios.get(imgUrl, {
+      // 🌟 Premium Loading Message
+      const loading = await message.reply(`
+╭━〔 ⚡ SYSTEM ⚡ 〕━╮
+┃
+┃ ⏳ আরে মামা দাঁড়াও দিতেছি...
+┃
+╰━━━━━━━━━━━━━━━━━━╯
+`);
+
+      // 🎥 Google Drive Direct Video Link
+      const videoUrl =
+        "https://drive.google.com/uc?id=1BC7jTudYN-6_BKks4GZwjK3CDFKNtftG";
+
+      // download video
+      const response = await axios.get(videoUrl, {
         responseType: "arraybuffer"
       });
 
       fs.writeFileSync(filePath, Buffer.from(response.data));
 
+      // ✅ Send video + text together
       await message.reply({
-        body: text,
+        body: "এই নাও মামা হাত মারো 😎🔥",
         attachment: fs.createReadStream(filePath)
       });
 
+      // 🗑️ Delete loading message
+      if (loading && loading.messageID) {
+        message.unsend(loading.messageID);
+      }
+
+      // 🧹 Delete cache file
       fs.unlinkSync(filePath);
 
     } catch (err) {
-      console.error("Fork command error:", err);
-      message.reply("❌ Failed to send fork message!");
+      console.error("Fork Command Error:", err);
+
+      return message.reply("❌ ভিডিও পাঠাতে সমস্যা হয়েছে!");
     }
   }
 };
