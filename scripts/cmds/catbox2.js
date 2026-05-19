@@ -1,191 +1,82 @@
 const axios = require("axios");
-const fs = require("fs-extra");
-const path = require("path");
-const os = require("os");
-const FormData = require("form-data");
+
+const getBase = async () => {
+        const res = await axios.get("https://raw.githubusercontent.com/mahmudx7/HINATA/main/baseApiUrl.json");
+        return res.data.mahmud;
+};
 
 module.exports = {
-  config: {
-    name: "catbox2",
-    aliases: ["imgur", "up"],
-    version: "5.0",
-    author: "𝆠፝𝐒𝐈𝐘𝐀𝐌-𝐇𝐀𝐒𝐀𝐍",
-    countDown: 5,
-    role: 0,
-    shortDescription: "Upload media to Imgur",
-    longDescription: "Reply to image/video/audio/gif to upload",
-    category: "tools",
-    guide: {
-      en: "{pn} reply to media"
-    }
-  },
+        config: {
+                name: "catbox2",
+                aliases: ["cb"],
+                version: "1.7",
+                author: "siyam",
+                countDown: 10,
+                role: 0,
+                description: {
+                        bn: "যেকোনো মিডিয়া ফাইলকে লিঙ্কে রূপান্তর করুন",
+                        en: "Convert any media file into a link",
+                        vi: "Chuyển đổi bất kỳ tệp phương tiện nào thành liên kết"
+                },
+                category: "tools",
+                guide: {
+                        bn: '   {pn}: যেকোনো ছবি/ভিডিওতে রিপ্লাই দিয়ে ব্যবহার করুন',
+                        en: '   {pn}: Reply to any image/video to get the link',
+                        vi: '   {pn}: Phản hồi bất kỳ ảnh/video nào để lấy liên kết'
+                }
+        },
 
-  onStart: async function ({ api, event, message }) {
+        langs: {
+                bn: {
+                        noMedia: "× বেবি, একটি ছবি বা ভিডিওতে রিপ্লাই দাও!",
+                        error: "× সমস্যা হয়েছে: %1। প্রয়োজনে Contact MahMUD।\n•WhatsApp: 01836298139"
+                },
+                en: {
+                        noMedia: "× Baby, please reply to a media file!",
+                        error: "× API error: %1. Contact MahMUD for help.\n•WhatsApp: 01836298139"
+                },
+                vi: {
+                        noMedia: "× Cưng ơi, hãy phản hồi một tệp phương tiện!",
+                        error: "× Lỗi: %1. Liên hệ MahMUD để hỗ trợ.\n•WhatsApp: 01836298139"
+                }
+        },
 
-    try {
+        onStart: async function ({ api, event, message, getLang }) {
+                const authorName = String.fromCharCode(77, 97, 104, 77, 85, 68);
+                if (this.config.author !== authorName) {
+                        return api.sendMessage("You are not authorized to change the author name.", event.threadID, event.messageID);
+                }
 
-      const reply = event.messageReply;
+                if (event.type !== "message_reply" || !event.messageReply.attachments.length) {
+                        return message.reply(getLang("noMedia"));
+                }
 
-      // CHECK REPLY
-      if (
-        !reply ||
-        !reply.attachments ||
-        reply.attachments.length === 0
-      ) {
-        return message.reply(
-          "⚠️ | Reply To Image/Video/Audio/Gif"
-        );
-      }
+                try {
+                        api.setMessageReaction("🥵", event.messageID, () => {}, true);
 
-      const attachment = reply.attachments[0];
+                        const attachmentUrl = event.messageReply.attachments[0].url;
+                        const baseUrl = await getBase();
+                        
+                        const response = await axios.get(`${baseUrl}/api/catbox`, {
+                                params: {
+                                        url: attachmentUrl
+                                },
+                                timeout: 100000
+                        });
 
-      // MEDIA URL
-      const fileUrl = attachment.url;
+                        if (response.data.status && response.data.link) {
+                                const replyLink = response.data.link;
+                                api.setMessageReaction("✅", event.messageID, () => {}, true);
+                                return message.reply(replyLink);
+                        } else {
+                                throw new Error("API response status is false.");
+                        }
 
-      if (!fileUrl) {
-        return message.reply(
-          "❌ | Media URL Not Found"
-        );
-      }
-
-      // REACTION
-      api.setMessageReaction(
-        "📤",
-        event.messageID,
-        () => {},
-        true
-      );
-
-      // LOADING
-      const loading = await message.reply(
-        "🦅 | Uploading To Imgur Please Wait..."
-      );
-
-      // FILE EXTENSION
-      let ext = ".jpg";
-
-      switch (attachment.type) {
-
-        case "video":
-          ext = ".mp4";
-          break;
-
-        case "audio":
-          ext = ".mp3";
-          break;
-
-        case "animated_image":
-          ext = ".gif";
-          break;
-
-        case "photo":
-          ext = ".jpg";
-          break;
-      }
-
-      // TEMP FILE
-      const tempFile = path.join(
-        os.tmpdir(),
-        `imgur_${Date.now()}${ext}`
-      );
-
-      // DOWNLOAD FILE
-      const response = await axios({
-        method: "GET",
-        url: fileUrl,
-        responseType: "arraybuffer",
-        timeout: 60000
-      });
-
-      // SAVE FILE
-      fs.writeFileSync(tempFile, response.data);
-
-      // CHECK FILE
-      if (!fs.existsSync(tempFile)) {
-        throw new Error("File Download Failed");
-      }
-
-      // IMGUR CLIENT ID
-      const CLIENT_ID = "546c25a59c58ad7";
-
-      // FORM DATA
-      const form = new FormData();
-
-      form.append(
-        "image",
-        fs.createReadStream(tempFile)
-      );
-
-      // UPLOAD TO IMGUR
-      const upload = await axios.post(
-        "https://api.imgur.com/3/upload",
-        form,
-        {
-          headers: {
-            Authorization: `Client-ID ${CLIENT_ID}`,
-            ...form.getHeaders()
-          },
-          maxBodyLength: Infinity,
-          maxContentLength: Infinity,
-          timeout: 120000
+                } catch (err) {
+                        console.error("Catbox Error:", err);
+                        api.setMessageReaction("❌", event.messageID, () => {}, true);
+                        const errorMsg = err.response?.data?.error || err.message;
+                        return message.reply(getLang("error", errorMsg));
+                }
         }
-      );
-
-      // DELETE TEMP FILE
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile);
-      }
-
-      // GET LINK
-      const link = upload.data.data.link;
-
-      // CHECK LINK
-      if (!link) {
-        throw new Error("Imgur Upload Failed");
-      }
-
-      // SUCCESS REACTION
-      api.setMessageReaction(
-        "✅",
-        event.messageID,
-        () => {},
-        true
-      );
-
-      // REMOVE LOADING
-      try {
-        api.unsendMessage(
-          loading.messageID
-        );
-      } catch {}
-
-      // SEND RESULT
-      return message.reply(
-`╭─❍
-│ ✅👑𝆠፝𝐒𝐈𝐘𝐀𝐌-𝐇𝐀𝐒𝐀𝐍 👑
-│ 🔗 ${link}
-`
-      );
-
-    } catch (err) {
-
-      console.log("IMGUR ERROR:", err);
-
-      // ERROR REACTION
-      api.setMessageReaction(
-        "❌",
-        event.messageID,
-        () => {},
-        true
-      );
-
-      // ERROR MESSAGE
-      return message.reply(
-`❌ | Upload Failed
-
-📝 Error:
-${err.message}`
-      );
-    }
-  }
 };
