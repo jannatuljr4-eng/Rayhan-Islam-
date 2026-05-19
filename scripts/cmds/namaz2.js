@@ -10,7 +10,7 @@ module.exports = {
                 name: "namaz",
                 aliases: ["prayer", "salah", "নামাজ"],
                 version: "1.7",
-                author: "siyam",
+                author: "MahMUD",
                 countDown: 5,
                 role: 0,
                 description: {
@@ -29,7 +29,7 @@ module.exports = {
         langs: {
                 bn: {
                         noData: "× দুঃখিত বেবি, %1 শহরের নামাজের সময় পাওয়া যায়নি। 🕌",
-                        error: "× সমস্যা হয়েছে: %1। প্রয়োজনে Contact 𝆠፝𝐒𝐈𝐘𝐀𝐌-𝐇𝐀𝐒𝐀𝐍।"
+                        error: "× সমস্যা হয়েছে: %1। প্রয়োজনে Contact MahMUD।"
                 },
                 en: {
                         noData: "× Sorry baby, prayer times for %1 were not found. 🕌",
