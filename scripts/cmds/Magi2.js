@@ -4,38 +4,34 @@ const path = require("path");
 
 module.exports = {
   config: {
-    name: "Magi2",
-    version: "6.0.0",
+    name: "Mug2",
+    version: "3.0.0",
     author: "FARHAN-KHAN & SIYAM",
-    role: 0,
     countDown: 5,
+    role: 0,
+    shortDescription: "Premium Auto Video",
+    longDescription: "Auto Reply Premium Video System",
     category: "media",
     guide: {
-      en: "Premium Auto Reply Video System"
+      en: "{pn}"
     }
   },
 
-  onStart: async function () {
-    const cacheDir = path.join(__dirname, "cache");
+  onStart: async function () {},
 
-    await fs.ensureDir(cacheDir);
-
-    console.log("✅ MAGI2 READY");
-  },
-
-  onChat: async function ({ api, event }) {
+  handleEvent: async function ({ api, event }) {
     try {
       if (!event.body) return;
 
-      const body = event.body.trim();
+      const body = event.body.toLowerCase();
 
+      // 🎬 AUTO TRIGGER SYSTEM
       const videoMap = [
         {
           key: "কলে আসো",
           link: "https://files.catbox.moe/p8qlso.mp4",
           text: `
 ╭〔 ☎️ CALL REPLY 〕╮
-┃ @Everyone
 ┃ 📞 সবাই কলে আসো!
 ┃ 😎 gf bf দেওয়া হবে 🧑‍🍼
 ╰━━━━━━━━━━━━━━━╯
@@ -96,28 +92,33 @@ module.exports = {
         }
       ];
 
+      // 🔍 MATCH
       const match = videoMap.find(item =>
         body.includes(item.key)
       );
 
       if (!match) return;
 
+      // 📂 CACHE
       const cacheDir = path.join(__dirname, "cache");
-
       await fs.ensureDir(cacheDir);
 
-      const fileName = `Magi2_${Date.now()}.mp4`;
-      const filePath = path.join(cacheDir, fileName);
+      const filePath = path.join(
+        cacheDir,
+        `video_${Date.now()}.mp4`
+      );
 
+      // 🎭 RANDOM REACTION
       const reactions = ["💔", "👑", "💀", "😹", "🫶", "😔"];
 
       const reactEmoji =
         reactions[Math.floor(Math.random() * reactions.length)];
 
-      const loadingMsg = `
+      // ✨ LOADING MESSAGE
+      const loading = `
 👑 𝗡𝗜𝗝𝗛𝗨𝗠 𝗕𝗢𝗧 ✡️
 
-📡 𝗩𝗜𝗗𝗘𝗢 𝗜𝗦 𝗟𝗢𝗔𝗗𝗜𝗡𝗚...
+📡 VIDEO LOADING...
 
 ⏳ PLEASE WAIT...
 
@@ -125,13 +126,14 @@ module.exports = {
 `;
 
       api.sendMessage(
-        loadingMsg,
+        loading,
         event.threadID,
         async (err, info) => {
           if (err) return console.log(err);
 
-          const loadingMsgID = info.messageID;
+          const msgID = info.messageID;
 
+          // ❤️ REACTION
           try {
             api.setMessageReaction(
               reactEmoji,
@@ -142,9 +144,10 @@ module.exports = {
           } catch {}
 
           try {
+            // 📥 DOWNLOAD
             const response = await axios({
-              method: "GET",
               url: match.link,
+              method: "GET",
               responseType: "stream",
               timeout: 120000
             });
@@ -157,7 +160,7 @@ module.exports = {
               try {
 
                 try {
-                  api.unsendMessage(loadingMsgID);
+                  api.unsendMessage(msgID);
                 } catch {}
 
                 await api.sendMessage(
@@ -191,7 +194,7 @@ module.exports = {
               console.log(err);
 
               try {
-                api.unsendMessage(loadingMsgID);
+                api.unsendMessage(msgID);
               } catch {}
 
               api.sendMessage(
@@ -208,7 +211,7 @@ module.exports = {
             console.log(downloadErr);
 
             try {
-              api.unsendMessage(loadingMsgID);
+              api.unsendMessage(msgID);
             } catch {}
 
             api.sendMessage(
