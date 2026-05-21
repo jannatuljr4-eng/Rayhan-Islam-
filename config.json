@@ -16,7 +16,7 @@
 
   "nickNameBot": "─꯭‎— [,] 🤖 𝆠፝𝐍𝐈𝐉𝐇𝐔𝐌-𝐂𝐇𝐀𝐓-𝐁𝐎𝐓 🤖:)>𝟑",
 
-  "prefix": ",",
+  "prefix": "/",
 
   "adminOnly": {
     "enable": false,
@@ -25,12 +25,12 @@
 
   "adminBot": [
     "61589656899295",
-    "61560326905548"
+    "61583490928333"
   ],
 
   "security": {
     "enableOwnerLock": true,
-    "ownerUID": "61560326905548",
+    "ownerUID": "61589656899295",
     "ownerIndex": 0,
     "notes": "Do not change adminBot[0], bot will stop if modified"
   },
@@ -46,7 +46,7 @@
     "enable": false,
     "whiteListIds": [
       "61589656899295",
-      "61560326905548"
+      "61583490928333"
     ],
     "notes": "If enabled, only IDs in whiteListIds can use the bot."
   },
